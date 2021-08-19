@@ -12,13 +12,13 @@ import sys
 
 # Given:
 #  frequency(Hz), baselines(meters), declination(deg),
-#  latitude(deg)
+#  latitude(decimal degrees as a float)
 #
 # Return the fringe period, in seconds
 #
 #
 def fperiod(freq,baseline,decln,latitude):
-	
+    
     C=299792000.0
     Lambda = C/freq
     #
@@ -51,7 +51,7 @@ def getalpha(corner, srate):
     return alpha
 
 #
-# Given longitude(deg)
+# Given longitude(decimal degrees as a float)
 #
 # Return the current sidereal time as a string with
 #  "," separated tokens
@@ -75,3 +75,62 @@ def cur_sidereal(longitude):
     seconds=int(float(tokens[2]))
     sidt = "%02d,%02d,%02d" % (hours, minutes, seconds)
     return (sidt)
+
+#
+# Return mask in FFTW3 order given list of RFI frequencies, and given FFT size
+#
+# We provide for both RAW FFT (which will be complex), and post-mag**2,
+#  which will be floats
+#
+def rfi_mask(srate,freq,rfilist,fftsize,iscomplex):
+    
+    #
+    # Make up appropriate array
+    #
+    if (iscomplex == True):
+        rv = [complex(1.0,0.0)]*fftsize
+    else:
+        rv = [1.0]*fftsize
+        
+    #
+    # Bin width
+    #
+    binw = float(srate)/float(fftsize)
+    
+    #
+    # Frequency limits
+    #
+    low = freq-(srate/2.0)
+    high = freq+(srate/2.0)
+    
+    #
+    # Determine correct "zero" value to stuff into array
+    #
+    zerov = complex(0.0,0.0) if iscomplex == True else 0.0
+    
+    #
+    # For each entry in the RFI list
+    #
+    for r in rfilist:
+        
+        #
+        # Within limits?
+        #
+        if (r >= low and r <= high):
+            
+            #
+            # Compute the index into the mask
+            #
+            ndx = r - freq
+            ndx /= binw
+            
+            #
+            # If negative, adjust
+            #
+            ndx = int(ndx)
+            if (ndx < 0):
+                ndx += int(fftsize/2)
+                rv[ndx] = zerov
+            else:
+                rv[ndx] = zerov
+    return (rv)
