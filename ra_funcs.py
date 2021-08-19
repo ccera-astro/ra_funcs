@@ -120,14 +120,21 @@ def rfi_mask(srate,freq,rfilist,fftsize,iscomplex):
             
             #
             # Compute the index into the mask
+            # 
+            # Recall that the ordering in FFTW3 is:
+            #  [positive-frequencies,negative-frequencies]
+            #
+            # So we'll have to do a bit of index manipulation to
+            #  place the zero in the correct place in the output array
+            #
             #
             ndx = r - freq
             ndx /= binw
+            ndx = int(ndx)
             
             #
             # If negative, adjust
             #
-            ndx = int(ndx)
             if (ndx < 0):
                 ndx += int(fftsize/2)
                 rv[ndx] = zerov
