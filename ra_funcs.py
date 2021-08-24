@@ -46,7 +46,7 @@ def fperiod(freq,baseline,decln,latitude):
 #  filter
 #
 def getalpha(corner, srate):
-    q = math.pow(math.e,-2.0*(corner/srate))
+    q = math.pow(math.e,-2.0*3.14159*(corner/srate))
     alpha = 1.0 - q
     return alpha
 
